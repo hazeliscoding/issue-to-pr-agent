@@ -93,6 +93,26 @@ GetGitHistory
 ListChangedFiles
 ```
 
+**Implementation notes (delivered):**
+
+- `RepositoryWorkspace` (Domain) owns the security boundary: `Resolve(relativePath)` returns a
+  path proven to sit inside the root or throws `PathEscapeException`; absolute paths and `..`
+  escapes are rejected, and the separator-boundary check stops `repo-evil`-style prefix tricks.
+  Every reading tool routes through it. Case sensitivity matches the host file system. See
+  ADR 0001.
+- Four typed Application ports cover the six tools — `IFileReader`, `ICodeSearch`,
+  `ISymbolFinder`, `IGitInspector` — each with bounded output (byte budgets, match caps, line
+  ranges) that flags truncation. Infrastructure implements them over the filesystem and, for
+  git, LibGit2Sharp in-process (no child git process — kept separate from the Phase 2 sandbox).
+- Search and symbol lookup skip build output, dependencies, VCS internals, and binaries.
+  `FindSymbol` is regex-based and multi-language (C#/TS/JS/Python declarations) — broad but
+  build-free.
+- Scaffolding established here: `.sln`, `Directory.Build.props` (net10, nullable,
+  warnings-as-errors), nuget.org-only `nuget.config`, and the Domain/Application/Infrastructure
+  + UnitTests/IntegrationTests layout.
+- 31 tests: pure containment tests plus filesystem/git-backed tests over temp repositories. No
+  LLM/agent/API yet (Phase 3+); `docker compose` arrives with the first hostable surface.
+
 ## Phase 2 — Execution Sandbox
 
 Implement:

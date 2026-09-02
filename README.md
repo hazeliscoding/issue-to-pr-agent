@@ -19,11 +19,22 @@ If the issue can't be reproduced, the agent stops and explains why instead of gu
 
 .NET 10 · ASP.NET Core · Microsoft Agent Framework · PostgreSQL · OpenTelemetry · xUnit · GitHub API
 
+## Repository abstraction
+
+Phase 1 gives the agent its read-only senses over a repository — six deterministic tools
+(`ReadFile`, `SearchCode`, `FindSymbol`, `GetGitDiff`, `GetGitHistory`, `ListChangedFiles`),
+no LLM yet. The security-critical piece is **path containment**: every path routes through a
+`RepositoryWorkspace` that resolves it *inside* the repo root or refuses — absolute paths and
+`..` escapes are rejected, not clamped. Every tool returns **bounded** output (byte budgets,
+match caps, line ranges) and flags truncation; search and symbol lookup skip build output,
+dependencies, and binaries. Git is read in-process via LibGit2Sharp. See
+[ADR 0001](docs/adr/0001-repository-abstraction.md).
+
 ## Status 🚧
 
-Planning — see [docs/PLAN.md](docs/PLAN.md) for the phased build plan.
+In progress — see [docs/PLAN.md](docs/PLAN.md) for the phased build plan.
 
-- [ ] Phase 1 — Repository abstraction tools
+- [x] Phase 1 — Repository abstraction tools (path-contained, bounded, LibGit2Sharp)
 - [ ] Phase 2 — Execution sandbox (allowlisted commands)
 - [ ] Phase 3 — Issue analysis
 - [ ] Phase 4 — Test-first fix loop
@@ -33,8 +44,10 @@ Planning — see [docs/PLAN.md](docs/PLAN.md) for the phased build plan.
 
 ## Running Locally
 
+Phase 1 is a deterministic library layer — no service to host yet. Build and run the tests:
+
 ```bash
-docker compose up
+dotnet test
 ```
 
-(Coming with Phase 1.)
+`docker compose up` arrives with the first hostable surface (an API/worker in a later phase).
