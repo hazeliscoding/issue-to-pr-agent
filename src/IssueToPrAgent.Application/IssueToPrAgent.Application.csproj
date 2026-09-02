@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>IssueToPrAgent.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IssueToPrAgent.Domain\IssueToPrAgent.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
