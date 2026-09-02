@@ -207,6 +207,26 @@ Run Test
 
 If reproduction cannot be achieved, agent should stop and explain why.
 
+**Implementation notes (delivered):**
+
+- `TestFirstFixWorkflow` (Application) is deterministic and owns the sequence and every gate; the
+  model only proposes content — a reproduction test, then a fix — as typed `FileOperation`s, and
+  never runs a command or decides pass/fail. See ADR 0004.
+- Reproduction is confirmed by `dotnet build` (must succeed) then `dotnet test` (must fail), so a
+  non-compiling test isn't mistaken for a reproduction. If it can't be established within a retry
+  cap, the outcome is `CannotReproduce` and **no implementation code is touched**.
+- Two structural guards enforce the invariant: reproduction-phase changes may only touch test
+  files, and fix-phase changes may not modify the reproduction test. Violations are rejected
+  before any write.
+- Changes are anchored edits (exact find → replace) or file creates; `FileSystemFileWriter`
+  validates the whole batch (containment + anchor present exactly once) before applying, so a bad
+  op leaves no partial write. Every run returns a `FixOutcome` with the commands, applied changes,
+  and reproduction test path — the evidence for Phase 5/6.
+- 94 tests: planner JSON parsing, writer validation/atomicity/containment, and the full workflow
+  gates via a scripted model + scripted sandbox runner over real file writes. A real `dotnet`
+  end-to-end run is the manual Portfolio Demo (network-restore + slow); real process execution is
+  already proven in Phase 2.
+
 ## Phase 5 — Diff Reviewer
 
 Create a separate review step.

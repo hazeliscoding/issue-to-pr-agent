@@ -53,6 +53,17 @@ suspected areas point at real code. The model port has no tools — it can only 
 Default model is `claude-sonnet-5` (configurable). See
 [ADR 0003](docs/adr/0003-issue-analysis.md).
 
+## Test-first fix
+
+Phase 4 is where the agent writes code — under a deterministic loop that reproduces the bug
+*before* touching implementation. The model only proposes content (a reproduction test, then a
+fix) as typed file operations; the workflow owns the sequence and every decision. Reproduction is
+confirmed by `build` (must succeed) then `test` (must fail), so a non-compiling test isn't
+mistaken for a repro — and if the bug can't be reproduced, it **stops and explains** rather than
+guessing. Two structural guards make "reproduce before you change code" unbreakable: the repro
+step may only touch test files, and the fix step may not modify the reproduction test. Changes are
+anchored edits validated before applying. See [ADR 0004](docs/adr/0004-test-first-fix.md).
+
 ## Status 🚧
 
 In progress — see [docs/PLAN.md](docs/PLAN.md) for the phased build plan.
@@ -60,7 +71,7 @@ In progress — see [docs/PLAN.md](docs/PLAN.md) for the phased build plan.
 - [x] Phase 1 — Repository abstraction tools (path-contained, bounded, LibGit2Sharp)
 - [x] Phase 2 — Execution sandbox (default-deny allowlist, no shell, timeout + bounded output)
 - [x] Phase 3 — Issue analysis (grounded, typed + validated structured output)
-- [ ] Phase 4 — Test-first fix loop
+- [x] Phase 4 — Test-first fix loop (reproduce-before-fix, deterministic gates)
 - [ ] Phase 5 — Diff reviewer
 - [ ] Phase 6 — PR creation (approval-gated)
 - [ ] Phase 7 — CI feedback loop
