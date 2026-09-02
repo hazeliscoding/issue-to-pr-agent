@@ -139,6 +139,25 @@ Acceptance criteria:
 - Timeouts terminate execution.
 - Output size is bounded.
 
+**Implementation notes (delivered):**
+
+- `CommandAllowlist` (Domain) is a default-deny policy: an executable is permitted only if listed
+  and only with a listed sub-command (`dotnet` build/test/format/restore, `npm`/`pnpm` test,
+  read-only `git` diff/status). Matched on the bare executable name, so a full path or `.exe`
+  can't disguise a blocked tool. `SandboxTools` (the agent's single entry point) enforces it
+  before the runner runs — so "unsupported commands cannot execute" holds by construction. See
+  ADR 0002.
+- No shell: commands are an `(executable, argument-list)` pair run with `UseShellExecute=false`,
+  so `;`/`&&`/`|` are never interpreted — shell injection is structurally impossible.
+- `ProcessSandboxCommandRunner` (Infrastructure) provides the mechanics, kept separate from the
+  policy: a timeout that kills the whole process tree, bounded stdout/stderr buffers, and a
+  result carrying `ExitCode`, `Stdout`, `Stderr`, `Duration`, `CommandId`, plus `TimedOut` /
+  `OutputTruncated` flags.
+- 64 tests: allowlist policy (allowed/blocked/disguised/unlisted), tool mapping + denial via a
+  spy runner, and real-process mechanics (exit codes, timeout kill, output bounding).
+- Deferred to security hardening: environment/secret scrubbing and per-argument validation; the
+  high-level tools currently target the `dotnet` stack.
+
 ## Phase 3 — Issue Analysis
 
 Produce structured output:

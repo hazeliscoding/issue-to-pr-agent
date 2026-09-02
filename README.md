@@ -30,12 +30,23 @@ match caps, line ranges) and flags truncation; search and symbol lookup skip bui
 dependencies, and binaries. Git is read in-process via LibGit2Sharp. See
 [ADR 0001](docs/adr/0001-repository-abstraction.md).
 
+## Execution sandbox
+
+Phase 2 lets the agent run commands — but only vetted ones. A default-deny `CommandAllowlist`
+permits just build/test/format tooling and read-only git; everything else (curl, ssh, a shell,
+`git push`, `dotnet nuget push`) is refused, matched on the bare executable name so a full path
+can't disguise a blocked tool. Commands run with **no shell** (`UseShellExecute=false`), so
+`;`/`&&`/`|` are never interpreted — shell injection is structurally impossible. Every execution
+is bounded: a timeout kills the whole process tree, output is capped, and the result carries
+`ExitCode`, `Stdout`, `Stderr`, `Duration`, and a `CommandId`. See
+[ADR 0002](docs/adr/0002-execution-sandbox.md).
+
 ## Status 🚧
 
 In progress — see [docs/PLAN.md](docs/PLAN.md) for the phased build plan.
 
 - [x] Phase 1 — Repository abstraction tools (path-contained, bounded, LibGit2Sharp)
-- [ ] Phase 2 — Execution sandbox (allowlisted commands)
+- [x] Phase 2 — Execution sandbox (default-deny allowlist, no shell, timeout + bounded output)
 - [ ] Phase 3 — Issue analysis
 - [ ] Phase 4 — Test-first fix loop
 - [ ] Phase 5 — Diff reviewer

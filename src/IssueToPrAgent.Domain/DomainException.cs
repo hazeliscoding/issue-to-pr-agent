@@ -12,3 +12,9 @@ public sealed class DomainRuleException(string message) : DomainException(messag
 /// this is the deterministic guard that enforces it.
 /// </summary>
 public sealed class PathEscapeException(string message) : DomainException(message);
+
+/// <summary>
+/// A command was not on the execution allowlist. Its own type because it is the second security
+/// boundary — the agent can only ever run vetted commands, never arbitrary shells or tools.
+/// </summary>
+public sealed class CommandDeniedException(string message) : DomainException(message);
