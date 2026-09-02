@@ -41,13 +41,25 @@ is bounded: a timeout kills the whole process tree, output is capped, and the re
 `ExitCode`, `Stdout`, `Stderr`, `Duration`, and a `CommandId`. See
 [ADR 0002](docs/adr/0002-execution-sandbox.md).
 
+## Issue analysis
+
+Phase 3 introduces the first LLM: an issue becomes a **validated** structured analysis —
+`{problem, suspectedAreas, reproductionPlan, risk, unknowns}`. The model reasons, but
+deterministic code owns the contract: JSON is extracted (even from prose), every field is
+validated, lists are cleaned and capped, and `risk` maps to a typed `RiskLevel`; malformed
+output degrades safely. Before the model runs, the issue is **grounded** — code-shaped terms
+are searched (Phase 1's `SearchCode`) and the most-relevant files are handed over as facts, so
+suspected areas point at real code. The model port has no tools — it can only produce text.
+Default model is `claude-sonnet-5` (configurable). See
+[ADR 0003](docs/adr/0003-issue-analysis.md).
+
 ## Status 🚧
 
 In progress — see [docs/PLAN.md](docs/PLAN.md) for the phased build plan.
 
 - [x] Phase 1 — Repository abstraction tools (path-contained, bounded, LibGit2Sharp)
 - [x] Phase 2 — Execution sandbox (default-deny allowlist, no shell, timeout + bounded output)
-- [ ] Phase 3 — Issue analysis
+- [x] Phase 3 — Issue analysis (grounded, typed + validated structured output)
 - [ ] Phase 4 — Test-first fix loop
 - [ ] Phase 5 — Diff reviewer
 - [ ] Phase 6 — PR creation (approval-gated)

@@ -172,6 +172,23 @@ Produce structured output:
 }
 ```
 
+**Implementation notes (delivered):**
+
+- `IssueAnalysis` (Domain) is a typed contract, only ever built by the analyzer's validator —
+  never deserialized straight from the model. The analyzer extracts the JSON (even if prose-
+  wrapped), then validates: required `Problem` with a fallback, lists trimmed/de-duped/capped,
+  and free-text `risk` mapped to a `RiskLevel` enum (else `Unknown`). Malformed output degrades
+  safely. See ADR 0003.
+- Deterministic grounding: `IssueEvidenceGatherer` extracts code-shaped terms from the issue
+  (CamelCase/snake_case/dotted — prose filtered), runs bounded `SearchCode` queries (Phase 1),
+  and ranks the files mentioning the most terms. The model gets that evidence as facts so
+  suspected areas point at real code — shallow by design, distinct from Phase 4's locate loop.
+- The model port `ILanguageModel` is reused (single completion, no tools — no way to act);
+  `AnthropicLanguageModel` implements it, provider-replaceable. Default model `claude-sonnet-5`
+  (analysis is heavier than the sibling's Haiku summarization), configurable.
+- The issue is a typed `IssueContext` input; GitHub fetching (Octokit) is deferred to Phase 6,
+  which needs the GitHub client anyway. 79 tests; adds the `Anthropic` dependency.
+
 ## Phase 4 — Test-First Fix
 
 The agent must attempt to reproduce the issue before changing implementation code.
